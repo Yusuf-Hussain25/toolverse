@@ -7,7 +7,8 @@
     "start": "node server.js",
     "server": "nodemon server.js",
     "migrate": "node scripts/migrate.mjs",
-    "test:security": "node scripts/security-test.mjs"
+    "test:security": "node scripts/security-test.mjs",
+    "seed": "node scripts/seed.mjs"
   },
   "author": "Yusuf Hussain",
   "description": "Toolverse API: AI writing and image tools",

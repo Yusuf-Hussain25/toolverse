@@ -1,6 +1,8 @@
 import express from "express";
 import { clerkClient } from "@clerk/express";
 import { demoEmail } from "../config/env.js";
+import { query } from "../config/db.js";
+import { LIMITS, period } from "../lib/quota.js";
 
 // "Explore with a demo account": issues a one-time Clerk sign-in ticket for the demo user only.
 // The demo password never reaches the browser, and Clerk's new-device check doesn't apply to tickets.
@@ -33,6 +35,8 @@ demoRouter.post("/session", async (req, res) => {
             if (!data.length) return res.status(404).json({ error: "Demo account not found. Run npm run seed first." });
             demoUserId = data[0].id;
         }
+        // Visitors share the demo account: once it has used half an allowance, give it a fresh one
+        await query("DELETE FROM usage WHERE user_id = $1 AND period = $2 AND count >= $3", [demoUserId, period(), Math.floor(LIMITS.free.image / 2)]);
         const token = await clerkClient.signInTokens.createSignInToken({ userId: demoUserId, expiresInSeconds: 60 });
         res.json({ ticket: token.token });
     } catch (error) {
