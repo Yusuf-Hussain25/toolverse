@@ -56,7 +56,7 @@ const Landing = () => {
       <main>
         <section className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 pt-12 pb-16 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:pt-20">
           <div className="min-w-0 animate-fade-up">
-            <span className="chip chip-accent"><SparklesIcon size={13} /> Toolverse 2.0 is here</span>
+            <span className="chip chip-accent"><SparklesIcon size={13} /> Six AI tools, one workspace</span>
             <h1 className="mt-5 text-[44px] leading-[1.02] font-semibold tracking-[-0.05em] sm:text-[62px]">
               One workspace.<br /><span className="gradient-text">A universe of AI tools.</span>
             </h1>

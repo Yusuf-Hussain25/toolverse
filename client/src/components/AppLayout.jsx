@@ -97,7 +97,6 @@ const AppLayout = () => {
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-[var(--bg-elev)] px-4 py-6 lg:flex" aria-label="Sidebar">
         <div className="mb-8 flex items-center gap-2 px-2">
           <Logo to="/dashboard" size={32} />
-          <span className="chip chip-accent !h-6 !px-2 font-semibold">2.0</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
           <SidebarContent isActive={isActive} />
@@ -144,7 +143,7 @@ const AppLayout = () => {
           <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => setDrawer(false)} />
           <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col overflow-y-auto px-4 py-5 animate-[fade-up_.2s_ease-out_both]" style={{ background: 'var(--panel-solid)' }}>
             <div className="mb-6 flex items-center justify-between px-1">
-              <div className="flex items-center gap-2"><Logo to="/dashboard" /><span className="chip chip-accent !h-6 !px-2 font-semibold">2.0</span></div>
+              <Logo to="/dashboard" />
               <button className="icon-btn" onClick={() => setDrawer(false)} aria-label="Close menu"><XIcon size={19} /></button>
             </div>
             <SidebarContent isActive={isActive} />
