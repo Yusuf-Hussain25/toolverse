@@ -1,32 +1,24 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { UserButton } from '@clerk/react'
-import { SparklesIcon } from 'lucide-react'
 import Auth from './pages/Auth'
+import Dashboard from './pages/Dashboard'
+import Tools from './pages/Tools'
+import Library from './pages/Library'
 import ProtectedRoute from './components/ProtectedRoute'
-import Logo from './components/ui/Logo'
-import EmptyState from './components/ui/EmptyState'
-
-// Placeholder until the workspace is rebuilt
-const WorkspaceSoon = () => (
-  <div className="mx-auto max-w-7xl px-4 py-5 sm:px-8">
-    <header className="flex items-center justify-between">
-      <Logo />
-      <UserButton />
-    </header>
-    <div className="card mt-8">
-      <EmptyState icon={SparklesIcon} title="You're signed in" text="The new workspace is coming in the next commit." />
-    </div>
-  </div>
-)
+import AppLayout from './components/AppLayout'
+import { AccountProvider } from './context/AccountContext'
 
 const App = () => (
   <Routes>
     <Route path="/login/*" element={<Auth mode="login" />} />
     <Route path="/register/*" element={<Auth mode="register" />} />
     <Route element={<ProtectedRoute />}>
-      <Route path="/dashboard" element={<WorkspaceSoon />} />
+      <Route element={<AccountProvider><AppLayout /></AccountProvider>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tools" element={<Tools />} />
+        <Route path="/library" element={<Library />} />
+      </Route>
     </Route>
-    <Route path="*" element={<Navigate to="/login" replace />} />
+    <Route path="*" element={<Navigate to="/dashboard" replace />} />
   </Routes>
 )
 

@@ -15,8 +15,9 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
-// Signed file paths from the API ("/api/files/...") -> absolute URLs
-export const fileUrl = (path, { download = false } = {}) => `${API_URL}${path}${download ? "&download=1" : ""}`;
+// Signed file paths from the API ("/api/files/...") -> absolute URLs; `download` names the saved file
+export const fileUrl = (path, { download } = {}) =>
+    path ? `${API_URL}${path}${download ? `&download=${encodeURIComponent(download)}` : ""}` : null;
 
 // A readable message from any API or network error
 export const errorMessage = (err, fallback = "Something went wrong") => {
