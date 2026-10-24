@@ -1,5 +1,5 @@
 import { query } from "../config/db.js";
-import { usageFor } from "../lib/quota.js";
+import { LIMITS, usageFor } from "../lib/quota.js";
 import { describeTextProvider, ARTICLE_LENGTHS, ARTICLE_TONES, BLOG_CATEGORIES } from "../lib/ai.js";
 import { ASPECTS, IMAGE_STYLES, assetUrl, bgProviderName, cloudinaryConfigured, imageProviderName } from "../lib/images.js";
 
@@ -65,6 +65,7 @@ export const getMe = async (req, res, next) => {
             plan: req.plan,
             demo: req.isDemo,
             usage,
+            limits: LIMITS,
             stats: {
                 total: t.total,
                 words: t.words,

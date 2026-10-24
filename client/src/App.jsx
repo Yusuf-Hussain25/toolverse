@@ -1,37 +1,62 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import Auth from './pages/Auth'
-import Dashboard from './pages/Dashboard'
-import Tools from './pages/Tools'
-import Library from './pages/Library'
-import WriteArticle from './pages/tools/WriteArticle'
-import BlogTitles from './pages/tools/BlogTitles'
-import GenerateImage from './pages/tools/GenerateImage'
-import RemoveBackground from './pages/tools/RemoveBackground'
-import RemoveObject from './pages/tools/RemoveObject'
-import ReviewResume from './pages/tools/ReviewResume'
+import { Suspense, lazy } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import Landing from './pages/Landing'
 import ProtectedRoute from './components/ProtectedRoute'
-import AppLayout from './components/AppLayout'
+import Loader from './components/ui/Loader'
 import { AccountProvider } from './context/AccountContext'
 
+// The landing page loads first; everything behind sign-in is split into its own chunks
+const AppLayout = lazy(() => import('./components/AppLayout'))
+const Auth = lazy(() => import('./pages/Auth'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Tools = lazy(() => import('./pages/Tools'))
+const Library = lazy(() => import('./pages/Library'))
+const Community = lazy(() => import('./pages/Community'))
+const Plan = lazy(() => import('./pages/Plan'))
+const WriteArticle = lazy(() => import('./pages/tools/WriteArticle'))
+const BlogTitles = lazy(() => import('./pages/tools/BlogTitles'))
+const GenerateImage = lazy(() => import('./pages/tools/GenerateImage'))
+const RemoveBackground = lazy(() => import('./pages/tools/RemoveBackground'))
+const RemoveObject = lazy(() => import('./pages/tools/RemoveObject'))
+const ReviewResume = lazy(() => import('./pages/tools/ReviewResume'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+// Keeps the shell on screen while a page chunk loads
+const PageFallback = () => (
+  <div className="space-y-4" aria-hidden="true">
+    <div className="skeleton h-9 w-64" />
+    <div className="skeleton h-40 !rounded-[22px]" />
+  </div>
+)
+
 const App = () => (
-  <Routes>
-    <Route path="/login/*" element={<Auth mode="login" />} />
-    <Route path="/register/*" element={<Auth mode="register" />} />
-    <Route element={<ProtectedRoute />}>
-      <Route element={<AccountProvider><AppLayout /></AccountProvider>}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tools" element={<Tools />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/tools/write-article" element={<WriteArticle />} />
-        <Route path="/tools/blog-titles" element={<BlogTitles />} />
-        <Route path="/tools/generate-image" element={<GenerateImage />} />
-        <Route path="/tools/remove-background" element={<RemoveBackground />} />
-        <Route path="/tools/remove-object" element={<RemoveObject />} />
-        <Route path="/tools/review-resume" element={<ReviewResume />} />
+  <Suspense fallback={<Loader />}>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login/*" element={<Auth mode="login" />} />
+      <Route path="/register/*" element={<Auth mode="register" />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AccountProvider><Suspense fallback={<Loader />}><AppLayout /></Suspense></AccountProvider>}>
+          {[
+            ['/dashboard', <Dashboard />],
+            ['/tools', <Tools />],
+            ['/library', <Library />],
+            ['/community', <Community />],
+            ['/plan', <Plan />],
+            ['/tools/write-article', <WriteArticle />],
+            ['/tools/blog-titles', <BlogTitles />],
+            ['/tools/generate-image', <GenerateImage />],
+            ['/tools/remove-background', <RemoveBackground />],
+            ['/tools/remove-object', <RemoveObject />],
+            ['/tools/review-resume', <ReviewResume />],
+          ].map(([path, page]) => (
+            <Route key={path} path={path} element={<Suspense fallback={<PageFallback />}>{page}</Suspense>} />
+          ))}
+        </Route>
       </Route>
-    </Route>
-    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-  </Routes>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </Suspense>
 )
 
 export default App
