@@ -654,6 +654,28 @@ body::after {
     border-color: var(--border);
   }
 
+  .prose-tv table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: .92em;
+  }
+
+  .prose-tv th,
+  .prose-tv td {
+    padding: .55em .8em;
+    border: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .prose-tv th {
+    color: var(--text);
+    font-weight: 600;
+    background: var(--surface-2);
+  }
+
   .animate-fade-up {
     animation: fade-up var(--dur-slow) var(--ease-out) both;
   }
