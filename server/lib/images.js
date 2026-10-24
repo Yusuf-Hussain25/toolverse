@@ -11,8 +11,8 @@ export class ImageError extends Error {
 }
 
 // ---------------------------------------------------------------- generation
-// IMAGE_PROVIDER: pollinations (default, free, keyless; images carry a small Pollinations mark)
-//                 or clipdrop (CLIPDROP_API_KEY, paid after the trial, square only)
+// IMAGE_PROVIDER: pollinations (default, free, keyless; images carry a small Pollinations mark),
+//                 openai (OPENAI_API_KEY, paid per image, no mark) or clipdrop (CLIPDROP_API_KEY, square only)
 
 export const IMAGE_STYLES = ["Realistic", "Cinematic", "Anime", "Ghibli-inspired", "3D render", "Watercolor", "Pixel art", "Minimal flat"];
 export const ASPECTS = {
@@ -23,6 +23,7 @@ export const ASPECTS = {
 
 export const imageProviderName = () => {
     const chosen = process.env.IMAGE_PROVIDER?.trim().toLowerCase();
+    if (chosen === "openai" && process.env.OPENAI_API_KEY) return "openai";
     if (chosen === "clipdrop" && process.env.CLIPDROP_API_KEY) return "clipdrop";
     return "pollinations";
 };
@@ -33,6 +34,7 @@ export const generateImage = async ({ prompt, style, aspect }) => {
     const provider = imageProviderName();
     let res;
     try {
+        if (provider === "openai") return await generateWithOpenAI(full, aspect, started);
         if (provider === "clipdrop") {
             const form = new FormData();
             form.append("prompt", full);
@@ -63,6 +65,30 @@ export const generateImage = async ({ prompt, style, aspect }) => {
         throw new ImageError(busy ? "The free image service is busy. Try again in a minute." : `Image generation failed (HTTP ${res.status})`, 503);
     }
     return { buffer: Buffer.from(await res.arrayBuffer()), provider, durationMs: Date.now() - started };
+};
+
+// OpenAI image generation: JSON in, base64 PNG out. Sizes follow the chosen shape.
+const OPENAI_SIZES = { square: "1024x1024", landscape: "1536x1024", portrait: "1024x1536" };
+
+const generateWithOpenAI = async (prompt, aspect, started) => {
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: JSON.stringify({
+            model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
+            prompt,
+            size: OPENAI_SIZES[aspect],
+            quality: process.env.OPENAI_IMAGE_QUALITY || "medium",
+            n: 1,
+        }),
+        signal: AbortSignal.timeout(180_000),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 429) throw new ImageError("OpenAI is busy or the account's limit was reached. Try again in a minute.", 503);
+    if (!res.ok) throw new ImageError(`OpenAI: ${body.error?.message || `HTTP ${res.status}`}`, res.status === 400 ? 400 : 502);
+    const b64 = body.data?.[0]?.b64_json;
+    if (!b64) throw new ImageError("OpenAI returned no image. Try again.");
+    return { buffer: Buffer.from(b64, "base64"), provider: "openai", durationMs: Date.now() - started };
 };
 
 // ---------------------------------------------------------------- background removal

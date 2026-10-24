@@ -1,8 +1,10 @@
-// Text generation. Pick a provider with TEXT_PROVIDER:
-//   gemini        Google Gemini (GEMINI_API_KEY, free tier from AI Studio). Default when the key is set.
-//   pollinations  Pollinations.ai's free, keyless endpoint. Default without a Gemini key, so every
-//                 text tool works out of the box.
-// Both speak the OpenAI chat-completions format.
+// Text generation. Pick a provider with TEXT_PROVIDER, or let the first configured one win:
+//   anthropic     Claude (ANTHROPIC_API_KEY) through the official SDK: the best writing and reviews
+//   openai        OpenAI (OPENAI_API_KEY)
+//   gemini        Google Gemini (GEMINI_API_KEY, free tier from AI Studio)
+//   pollinations  Pollinations.ai's free, keyless endpoint, so every text tool works out of the box
+// OpenAI, Gemini and Pollinations speak the OpenAI chat-completions format; Claude uses its SDK (lib/claude.js).
+import { claudeComplete, claudeConfigured, describeClaudeError } from "./claude.js";
 
 export class AIError extends Error {
     constructor(message, status = 502) {
@@ -12,6 +14,17 @@ export class AIError extends Error {
 }
 
 const PROVIDERS = {
+    anthropic: {
+        label: "Claude",
+        configured: claudeConfigured,
+    },
+    openai: {
+        label: "OpenAI",
+        configured: () => Boolean(process.env.OPENAI_API_KEY),
+        url: "https://api.openai.com/v1/chat/completions",
+        headers: () => ({ Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }),
+        model: () => process.env.OPENAI_MODEL || "gpt-4.1-mini",
+    },
     gemini: {
         label: "Google Gemini",
         configured: () => Boolean(process.env.GEMINI_API_KEY),
@@ -31,7 +44,7 @@ const PROVIDERS = {
 export const textProviderName = () => {
     const chosen = process.env.TEXT_PROVIDER?.trim().toLowerCase();
     if (chosen && PROVIDERS[chosen]) return chosen;
-    return PROVIDERS.gemini.configured() ? "gemini" : "pollinations";
+    return ["anthropic", "openai", "gemini"].find((n) => PROVIDERS[n].configured()) || "pollinations";
 };
 
 export const describeTextProvider = () => {
@@ -78,9 +91,25 @@ const complete = async (args) => {
     }
 };
 
-const request = async (name, { system, user, maxTokens = 4096, temperature = 0.7 }) => {
+const viaClaude = async ({ system, user, effort }) => {
+    const started = Date.now();
+    let result;
+    try {
+        result = await claudeComplete({ system, user, effort });
+    } catch (err) {
+        const known = describeClaudeError(err);
+        if (known) throw new AIError(known.message, known.status);
+        throw err;
+    }
+    if (result.stopReason === "refusal") throw new AIError("Claude declined this request. Try rephrasing it.", 422);
+    if (!result.text) throw new AIError("The AI returned an empty answer. Try again.");
+    return { content: result.text, provider: "anthropic", durationMs: Date.now() - started };
+};
+
+const request = async (name, { system, user, maxTokens = 4096, temperature = 0.7, effort = "medium" }) => {
     const p = PROVIDERS[name];
     if (!p.configured()) throw new AIError(`TEXT_PROVIDER is "${name}" but its API key is missing in server/.env`, 503);
+    if (name === "anthropic") return viaClaude({ system, user, effort });
 
     const started = Date.now();
     let res;
@@ -93,7 +122,11 @@ const request = async (name, { system, user, maxTokens = 4096, temperature = 0.7
                 messages: [{ role: "system", content: system }, { role: "user", content: user }],
                 // The free model reasons before answering and its replies are capped at ~1,500 tokens:
                 // keep its reasoning short and don't cap it further, or nothing is left for the answer
-                ...(name === "pollinations" ? { reasoning_effort: "low" } : { max_tokens: maxTokens }),
+                ...(name === "pollinations"
+                    ? { reasoning_effort: "low" }
+                    : name === "openai"
+                      ? { max_completion_tokens: maxTokens }
+                      : { max_tokens: maxTokens }),
                 temperature,
             }),
             signal: AbortSignal.timeout(120_000),
@@ -128,6 +161,7 @@ export const writeArticle = ({ topic, length, tone }) =>
             "Write only the article: no preamble, no notes about the task.",
         user: `Write a ${tone.toLowerCase()} article of about ${ARTICLE_LENGTHS[length].words} words about: ${topic}`,
         maxTokens: ARTICLE_LENGTHS[length].tokens,
+        effort: "medium",
     });
 
 export const blogTitles = ({ keyword, category }) =>
@@ -138,6 +172,7 @@ export const blogTitles = ({ keyword, category }) =>
         user: `Topic: ${keyword}\nCategory: ${category}`,
         maxTokens: 800,
         temperature: 0.9,
+        effort: "low",
     });
 
 export const reviewResume = ({ text, role }) =>
@@ -150,6 +185,7 @@ export const reviewResume = ({ text, role }) =>
         user: `${role ? `Target role: ${role}\n\n` : ""}Resume:\n\n${text}`,
         maxTokens: 2400,
         temperature: 0.4,
+        effort: "high",
     });
 
 // "Score: 78/100" on the first line -> 78, and the rest as the review body

@@ -153,6 +153,8 @@ const seedPerson = async (person, { sample = true } = {}) => {
             await query("UPDATE creations SET created_at = $2, updated_at = $2, sample = $3 WHERE id = $1", [c.id, at(daysAgo), sample]);
             added += 1;
             log(`${person.first}: ${tool} "${c.title.slice(0, 50)}"`);
+            // The free image service throttles back-to-back requests; pace them
+            if (tool === "image") await new Promise((r) => setTimeout(r, 15_000));
         } catch (err) {
             log(`${person.first}: ${tool} failed (${err.message}); run the seeder again later to fill it in`);
         }
