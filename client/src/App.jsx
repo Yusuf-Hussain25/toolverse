@@ -1,39 +1,21 @@
-import React from 'react'
-import { Route, Routes } from 'react-router-dom'
-import Home from './pages/Home'
-import Layout from './pages/Layout'
-import Dashboard from './pages/Dashboard'
-import WriteArticle from './pages/WriteArticle'
-import BlogTitles from './pages/BlogTitles'
-import GenerateImages from './pages/GenerateImages'
-import RemoveBackground from './pages/RemoveBackground'
-import RemoveObject from './pages/RemoveObject'
-import ReviewResume from './pages/ReviewResume'
-import Community from './pages/Community'
-import { useAuth } from '@clerk/clerk-react'
-import { useEffect } from 'react'
-import {Toaster} from 'react-hot-toast'
+import { SparklesIcon } from 'lucide-react'
+import Logo from './components/ui/Logo'
+import ThemeToggle from './components/ui/ThemeToggle'
+import EmptyState from './components/ui/EmptyState'
 
-const App = () => {
-
-  return (
-    <div>
-      <Toaster />
-      <Routes>
-        <Route path='/' element={<Home />}/>
-        <Route path='/ai' element={<Layout />}>
-          <Route index element={<Dashboard/>} />
-          <Route path='write-article' element={<WriteArticle/>} />
-          <Route path='blog-titles' element={<BlogTitles/>} />
-          <Route path='generate-images' element={<GenerateImages/>} />
-          <Route path='remove-background' element={<RemoveBackground/>} />
-          <Route path='remove-object' element={<RemoveObject/>} />
-          <Route path='review-resume' element={<ReviewResume/>} />
-          <Route path='community' element={<Community/>} />
-        </Route>
-      </Routes>
-    </div>
-  )
-}
+// Temporary shell while the 2.0 screens are rebuilt on the new design system
+const App = () => (
+  <div className="min-h-dvh">
+    <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
+      <Logo />
+      <ThemeToggle />
+    </header>
+    <main className="mx-auto max-w-7xl px-4 sm:px-8">
+      <div className="card">
+        <EmptyState icon={SparklesIcon} title="Toolverse 2.0 is on its way" text="The new workspace, tools and community are being rebuilt." />
+      </div>
+    </main>
+  </div>
+)
 
 export default App

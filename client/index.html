@@ -1,11 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Toolverse · Your AI toolkit for words and images</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Toolverse brings AI writing, image generation, background and object removal and resume reviews into one workspace." />
+    <meta name="theme-color" content="#08070d" />
+    <title>Toolverse · Your AI toolkit for words and images</title>
+    <script>
+      // Dark by default; follow a saved choice or the system light setting before first paint
+      try {
+        var saved = localStorage.getItem('toolverse-theme');
+        var light = saved ? saved === 'light' : window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (light) document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,23 +1,18 @@
-
-import { createRoot } from 'react-dom/client'
+import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
 import './index.css'
-import App from './App.jsx'
-import { BrowserRouter } from 'react-router-dom'
-import { ClerkProvider } from '@clerk/clerk-react'
+import { createRoot } from 'react-dom/client'
+import Root from './Root.jsx'
+import ConfigError from './components/ConfigError'
 
-
-// Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const API_URL = import.meta.env.VITE_API_URL
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error('Missing Publishable Key')
-}
+const missing = [
+  !PUBLISHABLE_KEY?.startsWith('pk_') && 'VITE_CLERK_PUBLISHABLE_KEY',
+  !API_URL && 'VITE_API_URL',
+].filter(Boolean)
 
 createRoot(document.getElementById('root')).render(
-  <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl='/'>
-    <BrowserRouter>
-       <App />
-    </BrowserRouter>,
-  </ClerkProvider>
-  
+  missing.length ? <ConfigError missing={missing} /> : <Root publishableKey={PUBLISHABLE_KEY} />
 )
