@@ -48,13 +48,19 @@ export const generateImage = async ({ prompt, style, aspect }) => {
             const seed = crypto.randomInt(1, 2 ** 31);
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
             res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+            // The free tier throttles bursts with 402/429; one patient retry usually gets through
+            if (res.status === 402 || res.status === 429) {
+                await new Promise((r) => setTimeout(r, 20_000));
+                res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+            }
         }
     } catch (err) {
         if (err instanceof ImageError) throw err;
         throw new ImageError(err.name === "TimeoutError" ? "Image generation took too long. Try again." : "Couldn't reach the image service", 504);
     }
     if (!res.ok || !res.headers.get("content-type")?.startsWith("image/")) {
-        throw new ImageError(res.status === 429 ? "The image service is busy. Try again in a minute." : `Image generation failed (HTTP ${res.status})`, 503);
+        const busy = res.status === 429 || res.status === 402;
+        throw new ImageError(busy ? "The free image service is busy. Try again in a minute." : `Image generation failed (HTTP ${res.status})`, 503);
     }
     return { buffer: Buffer.from(await res.arrayBuffer()), provider, durationMs: Date.now() - started };
 };
