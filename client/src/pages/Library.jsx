@@ -55,6 +55,23 @@ const Library = () => {
     load()
   }, [load])
 
+  // /library?open=<id> (from search or a notification) opens that creation
+  const openId = params.get('open')
+  useEffect(() => {
+    if (!openId) return
+    let cancelled = false
+    api.get(`/api/creations/${openId}`).then(({ data }) => !cancelled && setOpen(data.creation)).catch(() => {})
+    return () => { cancelled = true }
+  }, [openId])
+  const closeViewer = () => {
+    setOpen(null)
+    if (openId) {
+      const next = new URLSearchParams(params)
+      next.delete('open')
+      setParams(next, { replace: true })
+    }
+  }
+
   const setType = (t) => setParams(t ? { type: t } : {}, { replace: true })
   const filtered = Boolean(type || search)
   const update = (c) => {
@@ -132,7 +149,7 @@ const Library = () => {
         </div>
       )}
 
-      {open && <CreationViewer creation={open} onClose={() => setOpen(null)} onChange={update} onDelete={removeItem} />}
+      {open && <CreationViewer creation={open} onClose={closeViewer} onChange={update} onDelete={removeItem} />}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { imageUpload, resumeUpload } from "../middleware/upload.js";
 import * as tools from "../controllers/toolsController.js";
 import { deleteCreation, getCreation, listCreations, updateCreation } from "../controllers/creationsController.js";
 import { listCommunity, toggleLike } from "../controllers/communityController.js";
-import { getMe } from "../controllers/meController.js";
+import { getMe, listNotifications, markNotificationsSeen } from "../controllers/meController.js";
 
 const api = express.Router();
 
@@ -12,6 +12,8 @@ const api = express.Router();
 api.use(requireUser);
 
 api.get("/me", getMe);
+api.get("/notifications", listNotifications);
+api.post("/notifications/seen", markNotificationsSeen);
 
 api.post("/tools/article", tools.article);
 api.post("/tools/blog-titles", tools.titles);

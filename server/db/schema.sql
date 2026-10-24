@@ -61,3 +61,6 @@ CREATE TABLE IF NOT EXISTS usage (
     count   INTEGER NOT NULL DEFAULT 0 CHECK (count >= 0),
     PRIMARY KEY (user_id, period, kind)
 );
+
+-- 2.0 dashboard: when the user last opened their notifications (likes on shared images)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_seen_at TIMESTAMPTZ NOT NULL DEFAULT now();

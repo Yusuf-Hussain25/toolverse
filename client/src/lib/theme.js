@@ -1,4 +1,4 @@
-// Theme preference: "system" (default, follows prefers-color-scheme), "light" or "dark".
+// Theme preference: "light" (default), "dark", or "system" (follows prefers-color-scheme).
 // Applied as data-theme on <html>. index.html runs the same logic before first paint, so there is no flash.
 const KEY = "toolverse-theme";
 const listeners = new Set();
@@ -7,9 +7,9 @@ const media = typeof window !== "undefined" ? window.matchMedia("(prefers-color-
 export const getThemePreference = () => {
     try {
         const saved = localStorage.getItem(KEY);
-        return saved === "light" || saved === "dark" ? saved : "system";
+        return saved === "dark" || saved === "system" ? saved : "light";
     } catch {
-        return "system";
+        return "light";
     }
 };
 
@@ -22,14 +22,13 @@ export const applyTheme = (pref = getThemePreference()) => {
     const theme = resolveTheme(pref);
     document.documentElement.setAttribute("data-theme", theme);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "light" ? "#f6f5fb" : "#08070d");
+    if (meta) meta.setAttribute("content", theme === "light" ? "#f7f7fa" : "#08070d");
     listeners.forEach((fn) => fn(theme));
 };
 
 export const setThemePreference = (pref) => {
     try {
-        if (pref === "system") localStorage.removeItem(KEY);
-        else localStorage.setItem(KEY, pref);
+        localStorage.setItem(KEY, pref);
     } catch {
         // storage unavailable (private mode): the theme still applies for this visit
     }

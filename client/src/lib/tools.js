@@ -5,6 +5,7 @@ import { EraserIcon, FileTextIcon, HashIcon, ImageIcon, PenLineIcon, ScissorsIco
 export const TOOLS = [
     {
         id: "article",
+        tagline: "Generate high-quality articles in seconds.",
         path: "/tools/write-article",
         name: "Article Writer",
         short: "Article",
@@ -15,6 +16,7 @@ export const TOOLS = [
     },
     {
         id: "blog-titles",
+        tagline: "Get engaging blog title suggestions.",
         path: "/tools/blog-titles",
         name: "Blog Title Ideas",
         short: "Titles",
@@ -25,6 +27,7 @@ export const TOOLS = [
     },
     {
         id: "image",
+        tagline: "Create stunning images from text prompts.",
         path: "/tools/generate-image",
         name: "Image Generator",
         short: "Image",
@@ -35,6 +38,7 @@ export const TOOLS = [
     },
     {
         id: "background",
+        tagline: "Remove image backgrounds with one click.",
         path: "/tools/remove-background",
         name: "Background Remover",
         short: "Background",
@@ -45,6 +49,7 @@ export const TOOLS = [
     },
     {
         id: "object",
+        tagline: "Easily remove unwanted objects from images.",
         path: "/tools/remove-object",
         name: "Object Remover",
         short: "Object",
@@ -55,6 +60,7 @@ export const TOOLS = [
     },
     {
         id: "resume-review",
+        tagline: "Get AI feedback to improve your resume.",
         path: "/tools/review-resume",
         name: "Resume Review",
         short: "Resume",

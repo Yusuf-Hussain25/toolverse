@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Toolverse brings AI writing, image generation, background and object removal and resume reviews into one workspace." />
-    <meta name="theme-color" content="#08070d" />
+    <meta name="theme-color" content="#f7f7fa" />
     <title>Toolverse · Your AI toolkit for words and images</title>
     <script>
-      // Dark by default; follow a saved choice or the system light setting before first paint
+      // Light by default; apply a saved dark (or system) choice before first paint to avoid a flash
       try {
         var saved = localStorage.getItem('toolverse-theme');
-        var light = saved ? saved === 'light' : window.matchMedia('(prefers-color-scheme: light)').matches;
-        if (light) document.documentElement.setAttribute('data-theme', 'light');
+        var dark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
       } catch (e) {}
     </script>
   </head>
