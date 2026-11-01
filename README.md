@@ -6,6 +6,8 @@
 
 Write articles, brainstorm blog titles, generate images, remove backgrounds and objects, and get your resume reviewed, all in one place, with everything you make saved, searchable and shareable.
 
+**Live demo: [toolverse.yusufhussain.in](https://toolverse.yusufhussain.in)**
+
 ![Toolverse dashboard](docs/screenshots/dashboard.png)
 
 </div>
@@ -88,9 +90,11 @@ toolverse/
 │       │   ├── marketing/     # ToolPreview
 │       │   └── AppLayout, CommandPalette, HeaderMenus, UsageMeter
 │       ├── hooks/             # account, tool runs, creation actions, theme, dismiss
-│       ├── lib/               # tools catalogue, creations helpers, theme, format
+│       ├── lib/               # tools catalogue, creations helpers, theme, format, image downscaling before upload
 │       └── index.css          # design tokens and primitives
-└── server/                    # Express API
+├── api/index.js               # Vercel function that serves the Express app
+├── vercel.json                # build, rewrites, region and the model files bundled with the function
+└── server/                    # Express API (app.js builds the app, server.js listens locally)
     ├── lib/                   # ai (text providers), claude (Anthropic SDK), images (generation, removal, storage), quota
     ├── controllers/ routes/   # tools, creations, community, me, notifications, demo, Clerk webhook
     ├── db/schema.sql          # users, assets, creations, likes, usage
@@ -189,22 +193,21 @@ The seeder signs in as each account with a real Clerk session and creates everyt
 
 ## Deployment
 
-**Client on Vercel**
+The live demo runs entirely on free tiers: the client and the API on **Vercel** (one project, `toolverse.yusufhussain.in`) and Postgres on **Neon**, both in Singapore. Every push to `main` deploys. Nothing has to be kept awake: Vercel doesn't sleep, and Neon wakes in under a second.
 
-1. Import the repo in Vercel and set **Root Directory** to `client`.
-2. Add `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` (your API URL) and optionally `VITE_DEMO_EMAIL`.
-3. Deploy. `client/vercel.json` rewrites every path to `index.html`.
+**One Vercel project for both**
 
-**API on Render** (or any Node host with ~1 GB RAM)
+1. Import the repo in Vercel and keep the **Root Directory** at the repo root. `vercel.json` installs both packages, builds the client into `client/dist`, serves `api/index.js` (the Express app) as a function in `sin1`, and rewrites every other path to `index.html`.
+2. Add a database: Vercel → **Storage → Neon** (region Singapore), then run `npm run migrate --prefix server` once with its `DATABASE_URL`.
+3. Environment variables: `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DEMO_EMAIL`, `ORIGINS` (your domain and `vercel.app` URL), `FILE_SIGNING_SECRET`, `DB_POOL_SIZE=3`, the providers, and for the client `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` (your domain) and `VITE_DEMO_EMAIL`.
+4. Seed through the deployed API: `API_URL=https://… DATABASE_URL=… npm run seed --prefix server`.
+5. In Clerk, add the production domain (**Configure → Domains**).
 
-The local background-removal model is larger than a serverless function allows, so run the API as a web service:
+**Why it fits in a function:** the local background-removal model peaks at about 900 MB of memory, inside the 2 GB a Vercel function gets on the free plan. Its files (about 280 MB with the Linux onnxruntime binary) are bundled with `includeFiles`, which Vercel's large-functions support allows. Requests and responses are capped at 4.5 MB, so the browser scales photos over 3 MB down to 2048 px before uploading (the server resizes to 2048 px anyway), resumes are limited to 4 MB, and saved results are scaled down until they're under 4 MB.
 
-1. Render → **New → Web Service** → this repo, **Root Directory** `server`, build `npm install`, start `npm start`.
-2. Add the `server/.env` values, with `ORIGINS` set to your Vercel URL.
-3. Run `npm run migrate` once against the Neon database, then seed through the deployed API (`API_URL=https://… npm run seed --prefix server`).
-4. In Clerk, add the production domain (**Configure → Domains**).
+**Free providers for a public demo:** `TEXT_PROVIDER=pollinations` and `IMAGE_PROVIDER=pollinations` need no key and cost nothing, so visitors can't run up a bill. A free `GEMINI_API_KEY` (Google AI Studio, no card) gives better text. Leave paid keys (Anthropic, OpenAI) out of a public deployment.
 
-To run the API somewhere smaller, set `BG_PROVIDER=cloudinary` so the local model isn't needed.
+To run the API on a smaller Node host instead, set `BG_PROVIDER=cloudinary` so the local model isn't needed.
 
 ## Credits
 
