@@ -6,3 +6,6 @@ dist
 .DS_Store
 *.pdf
 !server/scripts/samples/*.pdf
+
+# Vercel CLI link
+.vercel

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --prefix server && npm ci --prefix client",
+  "buildCommand": "npm run build --prefix client",
+  "outputDirectory": "client/dist",
+  "framework": null,
+  "regions": ["sin1"],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 120,
+      "includeFiles": "server/node_modules/{@imgly/background-removal-node/dist,onnxruntime-node/bin/napi-v3/linux/x64}/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

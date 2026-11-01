@@ -2,6 +2,7 @@
   "name": "toolverse",
   "version": "2.0.0",
   "private": true,
+  "type": "module",
   "description": "Toolverse: AI writing and image tools in one workspace",
   "author": "Yusuf Hussain",
   "scripts": {
