@@ -6,6 +6,7 @@ import { Field, SubmitButton } from '../../components/tools/Fields'
 import { useToolRun } from '../../hooks/useToolRun'
 import { useAccount } from '../../hooks/useAccount'
 import { toolById } from '../../lib/tools'
+import { prepareImage } from '../../lib/uploadImage'
 
 const tool = toolById('object')
 const IMAGE_TYPES = 'image/jpeg,image/png,image/webp,image/avif'
@@ -17,10 +18,10 @@ const RemoveObject = () => {
   const [object, setObject] = useState('')
   const unavailable = tools && !tools.object.available
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const form = new FormData()
-    form.append('image', file)
+    form.append('image', await prepareImage(file))
     form.append('object', object)
     run(form)
   }

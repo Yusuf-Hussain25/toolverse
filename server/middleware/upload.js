@@ -1,7 +1,8 @@
 import multer from "multer";
 
 export const MAX_IMAGE_MB = Number(process.env.MAX_UPLOAD_MB || 10);
-export const MAX_RESUME_MB = 5;
+// Uploads go through the API; keep them under the 4.5 MB request limit of serverless hosts
+export const MAX_RESUME_MB = Number(process.env.MAX_RESUME_MB || 4);
 
 const reject = (message) => {
     const err = new Error(message);

@@ -148,6 +148,10 @@ const viaCloudinary = async (buffer, transformation) => {
     }
 };
 
+// The model's own default looks in <current folder>/node_modules, which is wrong when the API
+// runs from the repo root (Vercel) instead of server/. Point it at the installed package.
+const bgModelPath = () => new URL("./", import.meta.resolve("@imgly/background-removal-node")).href;
+
 export const removeBackground = async (buffer) => {
     const started = Date.now();
     const provider = bgProviderName();
@@ -156,7 +160,7 @@ export const removeBackground = async (buffer) => {
             ? await viaCloudinary(buffer, [{ effect: "background_removal" }])
             : await withSlot(async () => {
                   const { removeBackground: run } = await import("@imgly/background-removal-node");
-                  const blob = await run(new Blob([buffer], { type: "image/png" }), { model: "medium", output: { format: "image/png" } });
+                  const blob = await run(new Blob([buffer], { type: "image/png" }), { publicPath: bgModelPath(), model: "medium", output: { format: "image/png" } });
                   return Buffer.from(await blob.arrayBuffer());
               });
     return { buffer: png, provider, durationMs: Date.now() - started };
@@ -189,11 +193,23 @@ export const normalizeUpload = async (buffer) => {
 };
 
 // Saves an image as an asset. Cutouts keep transparency as PNG; photos are stored as WebP.
+// Serverless hosts cap a response at 4.5 MB (Vercel), and assets are served through the API, so
+// an asset is scaled down until it fits. Only large transparent PNGs ever need this.
+const MAX_ASSET_BYTES = 4 * 1024 * 1024;
+
 export const saveAsset = async (owner, buffer, { keepAlpha = false } = {}) => {
-    const img = sharp(buffer).resize(MAX_SIDE, MAX_SIDE, { fit: "inside", withoutEnlargement: true });
-    const { data, info } = keepAlpha
-        ? await img.png({ compressionLevel: 8 }).toBuffer({ resolveWithObject: true })
-        : await img.webp({ quality: 86 }).toBuffer({ resolveWithObject: true });
+    const encode = (side) => {
+        const img = sharp(buffer).resize(side, side, { fit: "inside", withoutEnlargement: true });
+        return keepAlpha
+            ? img.png({ compressionLevel: 8 }).toBuffer({ resolveWithObject: true })
+            : img.webp({ quality: 86 }).toBuffer({ resolveWithObject: true });
+    };
+    let side = MAX_SIDE;
+    let { data, info } = await encode(side);
+    while (data.length > MAX_ASSET_BYTES && side > 512) {
+        side = Math.round(Math.max(info.width, info.height) * 0.8);
+        ({ data, info } = await encode(side));
+    }
     const mime = keepAlpha ? "image/png" : "image/webp";
     const { rows: [asset] } = await query(
         "INSERT INTO assets (owner, mime, width, height, bytes, size) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, width, height, size",

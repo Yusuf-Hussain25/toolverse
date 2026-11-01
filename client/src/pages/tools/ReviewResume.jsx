@@ -23,7 +23,7 @@ const ReviewResume = () => {
 
   const form = (
     <form onSubmit={submit} className="space-y-5">
-      <FileDrop file={file} onFile={setFile} accept="application/pdf" maxMb={5} kind="pdf" disabled={running} />
+      <FileDrop file={file} onFile={setFile} accept="application/pdf" maxMb={4} kind="pdf" disabled={running} />
       <Field label="Target role (optional)" htmlFor="role" hint="Feedback and keywords are tailored to it.">
         <input id="role" className="input" value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Senior Frontend Engineer" maxLength={80} />
       </Field>
