@@ -49,11 +49,15 @@ export const generateImage = async ({ prompt, style, aspect }) => {
             const { width, height } = ASPECTS[aspect];
             const seed = crypto.randomInt(1, 2 ** 31);
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
-            res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
-            // The free tier throttles bursts with 402/429; one patient retry usually gets through
-            if (res.status === 402 || res.status === 429) {
-                await new Promise((r) => setTimeout(r, 20_000));
-                res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+            // The free tier answers bursts with 402/429 and is often briefly overloaded (5xx).
+            // Retry with growing pauses, but finish well inside a serverless function's time limit.
+            const deadline = started + 100_000;
+            for (let attempt = 0; ; attempt++) {
+                res = await fetch(url, { signal: AbortSignal.timeout(Math.max(5_000, deadline - Date.now())) });
+                const retryable = res.status === 402 || res.status === 429 || res.status >= 500;
+                const pause = [4_000, 10_000, 20_000][attempt];
+                if (!retryable || pause === undefined || Date.now() + pause + 15_000 > deadline) break;
+                await new Promise((r) => setTimeout(r, pause));
             }
         }
     } catch (err) {
@@ -61,7 +65,7 @@ export const generateImage = async ({ prompt, style, aspect }) => {
         throw new ImageError(err.name === "TimeoutError" ? "Image generation took too long. Try again." : "Couldn't reach the image service", 504);
     }
     if (!res.ok || !res.headers.get("content-type")?.startsWith("image/")) {
-        const busy = res.status === 429 || res.status === 402;
+        const busy = res.status === 429 || res.status === 402 || res.status >= 500;
         throw new ImageError(busy ? "The free image service is busy. Try again in a minute." : `Image generation failed (HTTP ${res.status})`, 503);
     }
     return { buffer: Buffer.from(await res.arrayBuffer()), provider, durationMs: Date.now() - started };
